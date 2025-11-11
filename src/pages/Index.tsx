@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopicSection } from "@/components/TopicSection";
+import { Leaderboard } from "@/components/Leaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Trophy, Target, LogOut, Shield, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -239,23 +240,33 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 mt-6 md:mt-8">
-        <div className="space-y-6 max-w-5xl mx-auto">
-          {sections.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No topics yet. {isAdmin && "Add your first topic!"}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+          {/* Topics Section */}
+          <div className="lg:col-span-2 space-y-6">
+            {sections.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No topics yet. {isAdmin && "Add your first topic!"}</p>
+              </div>
+            ) : (
+              sections.map((section) => (
+                <TopicSection
+                  key={section.id}
+                  title={section.title}
+                  emoji={section.emoji}
+                  topics={section.topics}
+                  checkedTopics={checkedTopics}
+                  onToggleTopic={handleToggleTopic}
+                />
+              ))
+            )}
+          </div>
+
+          {/* Leaderboard Section */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <Leaderboard />
             </div>
-          ) : (
-            sections.map((section) => (
-              <TopicSection
-                key={section.id}
-                title={section.title}
-                emoji={section.emoji}
-                topics={section.topics}
-                checkedTopics={checkedTopics}
-                onToggleTopic={handleToggleTopic}
-              />
-            ))
-          )}
+          </div>
         </div>
 
         {/* Completion Message */}
