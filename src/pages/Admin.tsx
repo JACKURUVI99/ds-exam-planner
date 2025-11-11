@@ -4,9 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Loader2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, Plus, Loader2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -25,6 +26,8 @@ const Admin = () => {
   const [selectedSection, setSelectedSection] = useState("");
   const [topicText, setTopicText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -39,6 +42,7 @@ const Admin = () => {
 
   useEffect(() => {
     loadSections();
+    loadUsers();
   }, []);
 
   const loadSections = async () => {
@@ -55,6 +59,27 @@ const Admin = () => {
       });
     } else {
       setSections(data || []);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error("Error loading users:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingUsers(false);
     }
   };
 
@@ -200,6 +225,47 @@ const Admin = () => {
               )}
             </Button>
           </form>
+        </Card>
+
+        <Card className="mt-6 bg-gradient-card border-border/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              All Users
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingUsers ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : users.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No users found</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>User ID</TableHead>
+                    <TableHead>Joined</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.user_id}>
+                      <TableCell className="font-medium">{user.display_name}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {user.user_id}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
         </Card>
       </div>
     </div>
